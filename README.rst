@@ -56,3 +56,12 @@ One further niggle is that **suppliers of electronic services outside of the
 European Union are expected to charge VAT to their European customers**.  Many
 don’t, with the result that their products can be priced more competitively
 than would be possible for a company operating within the European Union.
+
+DISCLAIMER
+----------
+
+**It is YOUR RESPONSIBILITY if you use this code to check that the rates and
+thresholds you are using are the correct ones.  The author cannot be held
+liable for errors in this material, particularly as much of it comes from
+documents on the EU website that may be out of date and that themselves
+include disclaimers.**
