@@ -15,6 +15,7 @@ class Threshold(object):
         self.amount = amount
 
 class MemberState(object):
+    """Represents and holds information about an EU member state."""
     def __init__(self, code, iso_alpha_2, name,
                  standard_rate, reduced_rates,
                  super_reduced_rate, parking_rate,
@@ -103,10 +104,16 @@ MS = MemberState
 # http://ec.europa.eu/taxation_customs/resources/documents/taxation/vat/how_vat_works/rates/vat_rates_en.pdf
 # http://ec.europa.eu/taxation_customs/resources/documents/taxation/vat/traders/vat_community/vat_in_ec_annexi.pdf
 
+# 2015-01-01: There have been changes to the thresholds since the above Annex I document was last updated.
+#             Notably, Lithuania is now part of the Euro zone, so I've updated its entry in the table to
+#             reflect that change.  Unfortunately, there does not appear to be any obvious source of
+#             information on the thresholds that now apply (since LTL is no longer in use); I've rounded
+#             to the nearest round Euro amount for now.
+
 # Update these dates when you update the table below; they should reflect the dates of the update, not any dates
 # you might see on the documents above.
-vat_rate_update_date = datetime.date(2014, 4, 23)
-threshold_update_date = datetime.date(2014, 4, 23)
+vat_rate_update_date = datetime.date(2015, 1, 1)
+threshold_update_date = datetime.date(2015, 1, 1)
 
 # ********************************************************************************************************************
 # *                                                                                                                  *
@@ -140,7 +147,7 @@ member_states = [
     MS('IT', 'IT', 'Italy',           22.0,            10.0,    4.0,  None,    'EUR',     'EUR 10000.00',   'EUR 35000.00',   'EUR 30000.00',  r'\d{11}'),
     MS('CY', 'CY', 'Cyprus',          19.0,      (9.0,  5.0),  None,  None,    'EUR',     'EUR 10251.00',   'EUR 35000.00',   'EUR 15600.00',  r'\d{8}[A-Z]'),
     MS('LV', 'LV', 'Latvia',          21.0,            12.0,   None,  None,    'EUR',     'EUR 10000.00',   'EUR 35000.00',   'EUR 50000.00',  r'\d{11}'),
-    MS('LT', 'LT', 'Lithuania',       21.0,      (9.0,  5.0),  None,  None,    'LTL',     'LTL 35000.00',  'LTL 125000.00',  'LTL 155000.00',  r'\d{9}(?:\d{3})?'),
+    MS('LT', 'LT', 'Lithuania',       21.0,      (9.0,  5.0),  None,  None,    'EUR',     'EUR 10000.00',   'EUR 35000.00',   'EUR 45000.00',  r'\d{9}(?:\d{3})?'),
     MS('LU', 'LU', 'Luxembourg',      15.0,     (12.0,  6.0),   3.0,  12.0,    'EUR',     'EUR 10000.00',  'EUR 100000.00',   'EUR 25000.00',  r'\d{8}'),
     MS('HU', 'HU', 'Hungary',         27.0,     (18.0,  5.0),  None,  None,    'HUF',     'EUR 35000.00',   'EUR 35000.00', 'HUF 6000000.00',  r'\d{8}'),
     MS('MT', 'MT', 'Malta',           18.0,      (7.0,  5.0),  None,  None,    'EUR',     'EUR 10000.00',   'EUR 35000.00',  ('EUR 14000.00',
@@ -151,10 +158,11 @@ member_states = [
     MS('PL', 'PL', 'Poland',          23.0,      (8.0,  5.0),  None,  None,    'PLN',     'PLN 50000.00',  'PLN 160000.00',  'PLN 150000.00',  r'\d{10}'),
     MS('PT', 'PT', 'Portugal',        23.0,     (13.0,  6.0),  None,  13.0,    'EUR',     'EUR 10000.00',   'EUR 35000.00',  ('EUR 10000.00',
                                                                                                                               'EUR 12500.00'), r'\d{9}'),
-    MS('RO', 'RO', 'Romania',         24.0,      (9.0,  5.0),  None,  None,    'RON',     'RON 34000.00',  'RON 118000.00',  'RON 220000.00', r'\d{2,10}'),
-    MS('SI', 'SI', 'Slovenia',        22.0,             9.5,   None,  None,    'EUR',     'EUR 10000.00',   'EUR 35000.00',   'EUR 50000.00', r'\d{8}'),
-    MS('SK', 'SK', 'Slovakia',        20.0,            10.0,   None,  None,    'EUR',     'EUR 13941.00',   'EUR 35000.00',   'EUR 49790.00', r'\d{10}'),
-    MS('FI', 'FI', 'Finland',         24.0,     (14.0, 10.0),  None,  None,    'EUR',     'EUR 10000.00',   'EUR 35000.00',    'EUR 8500.00', r'\d{8}'),
-    MS('SE', 'SE', 'Sweden',          25.0,     (12.0,  6.0),  None,  None,    'SEK',     'SEK 90000.00',  'SEK 320000.00',            None,  r'\d{12}'),
-    MS('GB', 'GB', 'United Kingdom',  20.0,             5.0,   None,  None,    'GBP',     'GBP 79000.00',   'GBP 70000.00',   'GBP 79000.00', r'\d{3}\s*\d{4}\s*\d{2}(?:\s*\d{3})?|GD\d{3}|HA\d{3}'),
+    MS('RO', 'RO', 'Romania',         24.0,      (9.0,  5.0),  None,  None,    'RON',     'RON 34000.00',  'RON 118000.00',  'RON 220000.00',  r'\d{2,10}'),
+    MS('SI', 'SI', 'Slovenia',        22.0,             9.5,   None,  None,    'EUR',     'EUR 10000.00',   'EUR 35000.00',   'EUR 50000.00',  r'\d{8}'),
+    MS('SK', 'SK', 'Slovakia',        20.0,            10.0,   None,  None,    'EUR',     'EUR 13941.00',   'EUR 35000.00',   'EUR 49790.00',  r'\d{10}'),
+    MS('FI', 'FI', 'Finland',         24.0,     (14.0, 10.0),  None,  None,    'EUR',     'EUR 10000.00',   'EUR 35000.00',    'EUR 8500.00',  r'\d{8}'),
+    MS('SE', 'SE', 'Sweden',          25.0,     (12.0,  6.0),  None,  None,    'SEK',     'SEK 90000.00',  'SEK 320000.00',            None,   r'\d{12}'),
+    MS('GB', 'GB', 'United Kingdom',  20.0,             5.0,   None,  None,    'GBP',     'GBP 81000.00',   'GBP 70000.00',   'GBP 81000.00',  r'\d{3}\s*\d{4}\s*\d{2}(?:\s*\d{3})?|GD\d{3}|HA\d{3}'),
     ]
+    
