@@ -14,7 +14,9 @@ includes
 - Support for querying the VIES VAT database system (to check VAT details),
   *including fuzzy matching support for names and addresses*
 - Utility functions for UK VAT (in the vat.gb package), including
+
   * EC sales list XML generation
+
   * Mini One Stop Shop (MOSS) return generation
 
 A few words about VAT
