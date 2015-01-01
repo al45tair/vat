@@ -43,8 +43,8 @@ def generate(file_obj,
          tuples.  The MSC should be a two-character EU VAT country code or a
          MemberState object; the rate type should be one of
 
-           vat.gb.moss.STANDARD_RATE
-           vat.gb.moss.REDUCED_RATE
+           :py:const:`STANDARD_RATE`
+           :py:const:`REDUCED_RATE`
 
          The net value should be the value in Sterling.
        :param fe_supplies: An iterable yielding (VAT number, MSC, rate
@@ -53,8 +53,8 @@ def generate(file_obj,
          EU VAT country code or a MemberState object; the rate type should be
          one of
 
-           vat.gb.moss.STANDARD_RATE
-           vat.gb.moss.REDUCED_RATE
+           :py:const:`STANDARD_RATE`
+           :py:const:`REDUCED_RATE`
 
          The net value should be the value in Sterling.
         """

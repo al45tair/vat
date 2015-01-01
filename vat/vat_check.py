@@ -4,16 +4,17 @@ from __future__ import unicode_literals
 from . import vies, addresscmp
 
 def check_details(vat_number, vat_info={}, requester=None, address_threshold=0.7):
-    """Check a VAT number using VIES.  Unlike the functions in vat.vies, this
-    deals with the fact that different member states may behave in different
-    ways, and will always try to do a reasonable job.
+    """Check a VAT number using VIES.  Unlike the functions in
+    :py:mod:`vat.vies`, this deals with the fact that different member states
+    may behave in different ways, and will always try to do a reasonable job.
 
     The ``vat_info`` dictionary should contain entries for 'name',
     'street', 'postcode', and 'city'.  It can also contain an entry for
     'state', though that won't be sent to VIES (since VIES doesn't support it).
 
-    This function returns a tuple (match, VIESApproxResponse), where ``match``
-    is True, False or None, which means that we weren't able to determine
+    This function returns a tuple (match,
+    :py:class:`vat.vies.VIESApproxResponse`), where ``match`` is True,
+    False or None, which means that we weren't able to determine
     automatically whether or not the details match, but the VAT number itself
     is OK."""
 

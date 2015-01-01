@@ -21,9 +21,9 @@ def generate(file_obj,
          number must be unadorned and numeric; the value should be an integer in
          Sterling, and may be negative.  The type field should be one of
 
-           vat.gb.ecsl.B2B_GOODS
-           vat.gb.ecsl.B2B_INTERMEDIARY
-           vat.gb.ecsl.B2B_SERVICES
+           :py:const:`B2B_GOODS`
+           :py:const:`B2B_INTERMEDIARY`
+           :py:const:`B2B_SERVICES`
         """
 
     file_obj.write(("""<?xml version="1.0" encoding="UTF-8"?>
