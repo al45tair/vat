@@ -24,9 +24,9 @@ setup(
     long_description=long_desc,
     author='Alastair Houghton',
     author_email='alastair@alastairs-place.net',
-    url='http://bitbucket.org/al45tair/python-vat',
+    url='http://bitbucket.org/al45tair/vat',
     license='MIT License',
-    packages=['vat'],
+    packages=['vat', 'vat.gb', 'vat.metaphone'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: MIT License',
