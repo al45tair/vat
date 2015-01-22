@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 import vat
+import pytest
 
 # If you add to this list, pick people who:
 #
@@ -75,34 +76,59 @@ bad_info = { 'name': 'I am a great big rabbit' }
     
 def test_local_fuzzy_vies():
     """Test a VIES response that requires *we* do the fuzzy matching."""
-    valid, response = vat.check_details(test_numbers[0][0],
+    try:
+        valid, response = vat.check_details(test_numbers[0][0],
                                         test_numbers[0][1])
-    assert valid == True
+        assert valid == True
 
-    valid, response = vat.check_details(test_numbers[0][0], bad_info)
-    assert valid == False
-    
+        valid, response = vat.check_details(test_numbers[0][0], bad_info)
+        assert valid == False
+    except vat.VIESHTTPException as e:
+        if e.status == 500:
+            pytest.skip('EU VIES server is malfunctioning, so skipping test')
+        else:
+            raise
+        
 def test_remote_fuzzy_vies():
     """Test a VIES response where the member state does the fuzzy matching."""
-    valid, response = vat.check_details(test_numbers[1][0],
-                                        test_numbers[1][1])
-    assert valid == True
+    try:
+        valid, response = vat.check_details(test_numbers[1][0],
+                                            test_numbers[1][1])
+        assert valid == True
 
-    valid, response = vat.check_details(test_numbers[1][0], bad_info)
-    assert valid == False
-    
+        valid, response = vat.check_details(test_numbers[1][0], bad_info)
+        assert valid == False
+    except vat.VIESHTTPException as e:
+        if e.status == 500:
+            pytest.skip('EU VIES server is malfunctioning, so skipping test')
+        else:
+            raise
+        
 def test_non_compliant_vies():
     """Test a VIES response where the member state is non-compliant and
     does not provide details *or* do fuzzy matching."""
-    valid, response = vat.check_details(test_numbers[2][0], bad_info)
-    assert valid is None
-    assert response.trader_info['name'] == bad_info['name']
-
+    try:
+        valid, response = vat.check_details(test_numbers[2][0], bad_info)
+        assert valid is None
+        assert response.trader_info['name'] == bad_info['name']
+    except vat.VIESHTTPException as e:
+        if e.status == 500:
+            pytest.skip('EU VIES server is malfunctioning, so skipping test')
+        else:
+            raise
+        
 def test_all_vies():
     """Test all the numbers we have above, to make sure that we think they
     match."""
     for vat_number, details in test_numbers:
-        valid, response = vat.check_details(vat_number, details)
+        try:
+            valid, response = vat.check_details(vat_number, details)
+        except vat.VIESHTTPException as e:
+            if e.status == 500:
+                pytest.skip('EU VIES server is malfunctioning, so skipping test')
+            else:
+                raise
+        
         if vat_number.startswith('DE'):
             assert valid == None
         else:
