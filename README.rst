@@ -2,6 +2,10 @@
 Python VAT
 ==========
 
+.. image:: https://drone.io/bitbucket.org/al45tair/vat/status.png
+   :target: https://drone.io/bitbucket.org/al45tair/vat/latest
+   :alt: Build Status
+
 What is this?
 -------------
 
