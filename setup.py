@@ -14,7 +14,7 @@ class PyTest(TestCommand):
         errno = pytest.main(self.test_args)
         sys.exit(errno)
 
-with open('README.rst', 'r') as f:
+with open('README.rst', 'rb') as f:
     long_desc = f.read().decode('utf-8')
         
 setup(
@@ -40,9 +40,9 @@ setup(
         'test': PyTest
         },
     install_requires=[
+        'six',
         'lxml >= 3.4.0',
         'python-dateutil >= 1.5',
-        'Fuzzy >= 1.0',
         'python-Levenshtein >= 0.11.2',
         ],
     provides=['vat']

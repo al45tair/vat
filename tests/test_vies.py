@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+from __future__ import unicode_literals, print_function
 import vat
 import pytest
 
@@ -84,7 +84,7 @@ def test_local_fuzzy_vies():
         valid, response = vat.check_details(test_numbers[0][0], bad_info)
         assert valid == False
     except vat.VIESHTTPException as e:
-        if e.code == 500:
+        if e.code >= 500 and e.code <= 599:
             pytest.skip('EU VIES server is malfunctioning, so skipping test')
         else:
             raise
@@ -99,7 +99,7 @@ def test_remote_fuzzy_vies():
         valid, response = vat.check_details(test_numbers[1][0], bad_info)
         assert valid == False
     except vat.VIESHTTPException as e:
-        if e.code == 500:
+        if e.code >= 500 and e.code <= 599:
             pytest.skip('EU VIES server is malfunctioning, so skipping test')
         else:
             raise
@@ -112,7 +112,7 @@ def test_non_compliant_vies():
         assert valid is None
         assert response.trader_info['name'] == bad_info['name']
     except vat.VIESHTTPException as e:
-        if e.code == 500:
+        if e.code >= 500 and e.code <= 599:
             pytest.skip('EU VIES server is malfunctioning, so skipping test')
         else:
             raise
@@ -124,7 +124,7 @@ def test_all_vies():
         try:
             valid, response = vat.check_details(vat_number, details)
         except vat.VIESHTTPException as e:
-            if e.code == 500:
+            if e.code >= 500 and e.code <= 599:
                 pytest.skip('EU VIES server is malfunctioning, so skipping test')
             else:
                 raise
@@ -133,7 +133,7 @@ def test_all_vies():
             assert valid == None
         else:
             if valid != True:
-                print vat_number, details
+                print('%s %r' % (vat_number, details))
                 
             assert valid == True
 

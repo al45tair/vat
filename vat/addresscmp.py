@@ -3,8 +3,10 @@ from __future__ import unicode_literals
 
 import re
 import unicodedata
-import fuzzy
 import Levenshtein
+import six
+
+from . import metaphone
 
 _mappings = {
     'de': {
@@ -100,7 +102,7 @@ _invalid_re = re.compile(r'[^A-Za-z0-9]+')
 _token_re = re.compile(r'\s+', re.UNICODE)
 _word_re = re.compile(r'^[A-Za-z]+$')
 
-_metaphone = fuzzy.DMetaphone()
+_metaphone = metaphone.doublemetaphone
 
 def _build_charmap():
     """Construct the character map we use for transliteration"""
@@ -108,8 +110,8 @@ def _build_charmap():
     global _char_re
     
     chars = []
-    for mapping in _mappings.itervalues():
-        for k, v in mapping.iteritems():
+    for mapping in six.itervalues(_mappings):
+        for k, v in six.iteritems(mapping):
             _charmap[k] = v
             chars.append(k)
     _char_re = re.compile('[%s]' % ''.join(chars), re.UNICODE)
@@ -143,7 +145,7 @@ def _word_difference(s, t):
     if isinstance(s, list) or isinstance(s, tuple):
         min_dist = _infinity
         for w in s:
-            if w is None:
+            if w is None or w is '':
                 break
             min_dist = min(min_dist, _word_difference(w, t))
         return min_dist
@@ -151,13 +153,19 @@ def _word_difference(s, t):
     if isinstance(t, list) or isinstance(t, tuple):
         min_dist = _infinity
         for w in t:
-            if w is None:
+            if w is None or w is '':
                 break
             min_dist = min(min_dist, _word_difference(s, w))
         return min_dist
 
-    s = unicode(s)
-    t = unicode(t)
+    if isinstance(s, bytes):
+        s = s.decode('utf-8')
+    if isinstance(t, bytes):
+        t = t.decode('utf-8')
+
+    if s == t:
+        return 0
+    
     max_ed = max(len(s), len(t))
     return float(Levenshtein.distance(s, t)) / max_ed
 
