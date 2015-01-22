@@ -69,3 +69,9 @@ thresholds you are using are the correct ones.  The author cannot be held
 liable for errors in this material, particularly as much of it comes from
 documents on the EU website that may be out of date and that themselves
 include disclaimers.**
+
+Documentation
+-------------
+
+The documentation for this package is available on `Read the Docs
+<http://vat.readthedocs.org/en/latest>`.
