@@ -2,28 +2,17 @@
 from __future__ import unicode_literals
 
 import re
-import httplib, urllib
+import urllib
 import datetime
 import xml.sax.saxutils
+import time
+import six
+from six.moves import http_client
 from dateutil import tz
+from lxml import etree
 
-# Prefer lxml's etree if we have it, but run with others
-try:
-    from lxml import etree
-except ImportError:
-    try:
-        import xml.etree.cElementTree as etree
-    except ImportError:
-        try:
-            import xml.etree.ElementTree as etree
-        except ImportError:
-            try:
-                import cElementTree as eTree
-            except ImportError:
-                import elementtree.ElementTree as etree
-
-VIES_HOST = b'ec.europa.eu'
-VIES_PATH = b'/taxation_customs/vies/services/checkVatService'
+VIES_HOST = str('ec.europa.eu')
+VIES_PATH = str('/taxation_customs/vies/services/checkVatService')
 
 class VIESException(Exception):
     pass
@@ -53,7 +42,7 @@ class VIESSOAPException(VIESException):
         return '%s - %s (%s)\n%s' % (self.code, self.string, self.actor, self.detail)
 
     def __str__(self):
-        return str(unicode(self))
+        return str(self.__unicode__())
     
 class VIESHTTPException(VIESException):
     def __init__(self, code, message):
@@ -67,7 +56,7 @@ class VIESHTTPException(VIESException):
         return '%s - %s' % (self.code, self.message)
 
     def __str__(self):
-        return str(unicode(self))
+        return str(self.__unicode__())
     
 class VIESResponseBase(object):
     def __init__(self, country, vat_number, request_date, valid):
@@ -161,10 +150,19 @@ def check_vat(vat_number):
     
     headers = { b'Content-type': b'text/xml',
                 b'SOAPAction': b'urn:ec.europa.eu:taxud:vies:services:checkVat' }
-    conn = httplib.HTTPConnection(VIES_HOST)
-    conn.request(b'POST', VIES_PATH, message, headers)
-    response = conn.getresponse()
-    
+
+    tries = 0
+    response = None
+    while response is None or (tries < 5
+                               and response.status >= 500
+                               and response.status <= 599):
+        if tries > 0:
+            time.sleep(tries)
+        tries += 1
+        conn = http_client.HTTPConnection(VIES_HOST)
+        conn.request(str('POST'), VIES_PATH, message, headers)
+        response = conn.getresponse()
+
     if response.status != 200:
         raise VIESHTTPException(response.status, response.reason)
 
@@ -258,7 +256,7 @@ def check_vat_approx(vat_number, extra={}, requester=None):
     number = vat_number[2:]
 
     extra_tags = []
-    for k,v in extra.iteritems():
+    for k,v in six.iteritems(extra):
         t = _eltnames.get(k, None)
         if t:
             v = xml.sax.saxutils.escape(v)
@@ -284,9 +282,18 @@ def check_vat_approx(vat_number, extra={}, requester=None):
 
     headers = { b'Content-type': b'text/xml',
                 b'SOAPAction': b'urn:ec.europa.eu:taxud:vies:services:checkVatApprox' }
-    conn = httplib.HTTPConnection(VIES_HOST)
-    conn.request(b'POST', VIES_PATH, message, headers)
-    response = conn.getresponse()
+
+    tries = 0
+    response = None
+    while response is None or (tries < 5
+                               and response.status >= 500
+                               and response.status <= 599):
+        if tries > 0:
+            time.sleep(tries)
+        tries += 1
+        conn = http_client.HTTPConnection(VIES_HOST)
+        conn.request(str('POST'), VIES_PATH, message, headers)
+        response = conn.getresponse()
     
     if response.status != 200:
         raise VIESHTTPException(response.status, response.reason)
@@ -317,7 +324,7 @@ def check_vat_approx(vat_number, extra={}, requester=None):
     request_id = resp.find('./' + VIES_NS + 'requestIdentifier').text
     
     info = {}
-    for t,k in _respeltnames.iteritems():
+    for t,k in six.iteritems(_respeltnames):
         elt = resp.find('./' + VIES_NS + t)
         if elt is not None:
             if elt.text == '---':
@@ -326,7 +333,7 @@ def check_vat_approx(vat_number, extra={}, requester=None):
                 info[k] = elt.text
 
     match = {}
-    for t,k in _respmatchnames.iteritems():
+    for t,k in six.iteritems(_respmatchnames):
         elt = resp.find('./' + VIES_NS + t)
         if elt is not None:
             v = int(elt.text)
