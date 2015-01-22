@@ -40,6 +40,7 @@ setup(
         'test': PyTest
         },
     install_requires=[
+        'lxml >= 3.4.0',
         'python-dateutil >= 1.5',
         'Fuzzy >= 1.0',
         'python-Levenshtein >= 0.11.2',
