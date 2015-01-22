@@ -74,4 +74,4 @@ Documentation
 -------------
 
 The documentation for this package is available on `Read the Docs
-<http://vat.readthedocs.org/en/latest>`.
+<http://vat.readthedocs.org/en/latest>`_.
