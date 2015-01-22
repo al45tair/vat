@@ -84,7 +84,7 @@ def test_local_fuzzy_vies():
         valid, response = vat.check_details(test_numbers[0][0], bad_info)
         assert valid == False
     except vat.VIESHTTPException as e:
-        if e.status == 500:
+        if e.code == 500:
             pytest.skip('EU VIES server is malfunctioning, so skipping test')
         else:
             raise
@@ -99,7 +99,7 @@ def test_remote_fuzzy_vies():
         valid, response = vat.check_details(test_numbers[1][0], bad_info)
         assert valid == False
     except vat.VIESHTTPException as e:
-        if e.status == 500:
+        if e.code == 500:
             pytest.skip('EU VIES server is malfunctioning, so skipping test')
         else:
             raise
@@ -112,7 +112,7 @@ def test_non_compliant_vies():
         assert valid is None
         assert response.trader_info['name'] == bad_info['name']
     except vat.VIESHTTPException as e:
-        if e.status == 500:
+        if e.code == 500:
             pytest.skip('EU VIES server is malfunctioning, so skipping test')
         else:
             raise
@@ -124,7 +124,7 @@ def test_all_vies():
         try:
             valid, response = vat.check_details(vat_number, details)
         except vat.VIESHTTPException as e:
-            if e.status == 500:
+            if e.code == 500:
                 pytest.skip('EU VIES server is malfunctioning, so skipping test')
             else:
                 raise
