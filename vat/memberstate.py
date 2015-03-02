@@ -70,8 +70,11 @@ class MemberState(object):
         # The "parking" rate (or None)
         self.parking_rate = to_rate(parking_rate)
 
+        # A regular expression (as a string) matching the VAT number format
+        self.number_regex = '^(%s)$' % number_format
+        
         # A re.RegexObject matching the VAT number format
-        self.number_format = re.compile('^(%s)$' % number_format)
+        self.number_format = re.compile(self.number_regex)
 
         # The currency used in this Member State
         self.currency = currency
