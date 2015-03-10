@@ -259,7 +259,7 @@ def check_vat_approx(vat_number, extra={}, requester=None):
     for k,v in six.iteritems(extra):
         t = _eltnames.get(k, None)
         if t:
-            v = xml.sax.saxutils.escape(v, { "'": '&#39;' })
+            v = xml.sax.saxutils.escape(v, { "'": '&#x2019;' })
             extra_tags.append('<vies:%s>%s</vies:%s>' % (t, v, t))
 
     if requester:
