@@ -96,16 +96,6 @@ class Row(RepeatArray):
         else:
             column.set(TABLE + 'number-columns-repeated', '%s' % repeat)
 
-    def before_split(self):
-        with open('/tmp/tst.out', 'a') as f:
-            f.write(etree.tostring(self.row, pretty_print=True))
-            f.write('\n')
-            
-    def after_split(self):
-        with open('/tmp/tst.out', 'a') as f:
-            f.write(etree.tostring(self.row, pretty_print=True))
-            f.write('\n\n')
-            
     def insert_before(self, column, new_column):
         ndx = self.row.index(column)
         self.row.insert(ndx, new_column)
