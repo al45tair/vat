@@ -19,7 +19,7 @@ with open('README.rst', 'rb') as f:
         
 setup(
     name='vat',
-    version='0.1.1',
+    version='0.2.0',
     description='A python package for dealing with VAT',
     long_description=long_desc,
     author='Alastair Houghton',
