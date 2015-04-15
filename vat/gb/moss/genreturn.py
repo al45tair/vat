@@ -4,6 +4,8 @@ import datetime
 import io
 import re
 import decimal
+import bisect
+import copy
 from lxml import etree
 
 from ... import MemberState
@@ -11,16 +13,153 @@ from ... import MemberState
 STANDARD_RATE = 'Standard'
 REDUCED_RATE = 'Reduced'
 
-def v(v):
-    wrapper = etree.Element('v')
-    wrapper.text = '%s' % v
+TABLE = '{urn:oasis:names:tc:opendocument:xmlns:table:1.0}'
+TEXT = '{urn:oasis:names:tc:opendocument:xmlns:text:1.0}'
+
+def v(obj):
+    wrapper = etree.Element(TEXT + 'p')
+    wrapper.text = '%s' % obj
     return wrapper
 
+class RepeatArray(object):
+    def __init__(self):
+        self.index = []
+        self.items = []
+
+    def copy_item(self, item):
+        return copy.deepcopy(item)
+
+    def set_repeat(self, item, repeat):
+        pass
+    
+    def insert_before(self, item, new_item):
+        pass
+
+    def insert_after(self, item, new_item):
+        pass
+
+    def before_split(self):
+        pass
+
+    def after_split(self):
+        pass
+    
+    def get(self, ndx, split=False):
+        rndx = bisect.bisect_left(self.index, ndx, 0, len(self.index) - 2)
+        item = self.items[rndx]
+        if split:
+            repeat = self.index[rndx + 1] - self.index[rndx]
+            if repeat != 1:
+                self.before_split()
+                andx = self.index[rndx]
+                before = andx - ndx
+                after = self.index[rndx + 1] - ndx - 1
+                self.set_repeat(item, 1)
+                if before:
+                    item_before = self.copy_item(item)
+                    self.set_repeat(item_before, before)
+                    self.items.insert(rndx, item_before)
+                    rndx += 1
+                    self.index.insert(rndx, ndx)
+                    self.insert_before(item, item_before)
+                if after:
+                    item_after = self.copy_item(item)
+                    self.set_repeat(item_after, after)
+                    self.items.insert(rndx + 1, item_after)
+                    self.index.insert(rndx + 1, ndx + 1)
+                    self.insert_after(item, item_after)
+                self.after_split()
+        return item
+    
+class Row(RepeatArray):
+    def __init__(self, row):
+        super(Row, self).__init__()
+        self.row = row
+
+        colndx = 1
+        for col in row.iterfind(TABLE + 'table-cell'):
+            self.index.append(colndx)
+            self.items.append(col)
+            repeat = col.get(TABLE + 'number-columns-repeated')
+            if repeat:
+                colndx += int(repeat)
+            else:
+                colndx += 1
+        self.index.append(colndx)
+
+    def set_repeat(self, column, repeat):
+        if repeat == 1:
+            try:
+                del column.attrib[TABLE + 'number-columns-repeated']
+            except KeyError:
+                pass
+        else:
+            column.set(TABLE + 'number-columns-repeated', '%s' % repeat)
+
+    def before_split(self):
+        with open('/tmp/tst.out', 'a') as f:
+            f.write(etree.tostring(self.row, pretty_print=True))
+            f.write('\n')
+            
+    def after_split(self):
+        with open('/tmp/tst.out', 'a') as f:
+            f.write(etree.tostring(self.row, pretty_print=True))
+            f.write('\n\n')
+            
+    def insert_before(self, column, new_column):
+        ndx = self.row.index(column)
+        self.row.insert(ndx, new_column)
+
+    def insert_after(self, column, new_column):
+        ndx = self.row.index(column)
+        self.row.insert(ndx + 1, new_column)
+
 _ref_re = re.compile(r'([A-Z]+)([0-9]+)')
-def cell(sheet, ref):
-    m = _ref_re.match(ref.upper())
-    return sheet.find('./{*}sheetData/{*}row[@r="%s"]/{*}c[@r="%s"]'
-                      % (m.group(2), m.group(0)))
+class Sheet(RepeatArray):
+    def __init__(self, table):
+        super(Sheet, self).__init__()
+        self.table = table
+        
+        rowndx = 1
+        for row in table.iterfind(TABLE + 'table-row'):
+            self.index.append(rowndx)
+            self.items.append(row)
+            repeat = row.get(TABLE + 'number-rows-repeated')
+            if repeat:
+                rowndx += int(repeat)
+            else:
+                rowndx += 1
+        self.index.append(rowndx)
+
+    def set_repeat(self, row, repeat):
+        if repeat == 1:
+            try:
+                del row.attrib[TABLE + 'number-rows-repeated']
+            except KeyError:
+                pass
+        else:
+            row.set(TABLE + 'number-rows-repeated', '%s' % repeat)
+
+    def insert_before(self, row, new_row):
+        ndx = self.table.index(row)
+        self.table.insert(ndx, new_row)
+
+    def insert_after(self, row, new_row):
+        ndx = self.table.index(row)
+        self.table.insert(ndx + 1, new_row)
+        
+    def cell(self, cell):
+        m = _ref_re.match(cell.upper())
+        row = int(m.group(2))
+        col_a = m.group(1)
+        col = 0
+        for ch in col_a:
+            chval = ord(ch) - ord('A') + 1
+            col = 26 * col + chval
+        return Row(self.get(row, split=True)).get(col, split=True)
+
+def table(content, name):
+    return content.find('.//{table}table[@{table}name="{name}"]'.format(table=TABLE, name=name))
 
 class TooManySupplies(Exception):
     """Raised if you attempt to generate a MOSS return with more than 150
@@ -39,19 +178,19 @@ def generate(file_obj,
          Defaults to the previous quarter.
        :param int year: The year (e.g. 2015) for this return.
          Defaults to the current year.
-       :param uk_supplies: An iterable yielding (MSC, rate type, rate, net value)
-         tuples.  The MSC should be a two-character EU VAT country code or a
-         MemberState object; the rate type should be one of
+       :param uk_supplies: An iterable yielding (MSC, rate type, rate, net value,
+         vat due) tuples.  The MSC should be a two-character EU VAT country code
+         or a MemberState object; the rate type should be one of
 
            :py:const:`STANDARD_RATE`
            :py:const:`REDUCED_RATE`
 
          The net value should be the value in Sterling.
        :param fe_supplies: An iterable yielding (VAT number, MSC, rate
-         type, rate, net value) tuples.  The VAT number should include the
-         two-character EU VAT country code; the MSC should be a two-character
-         EU VAT country code or a MemberState object; the rate type should be
-         one of
+         type, rate, net value, vat due) tuples.  The VAT number should
+         include the two-character EU VAT country code; the MSC should be a
+         two-character EU VAT country code or a MemberState object; the rate
+         type should be one of
 
            :py:const:`STANDARD_RATE`
            :py:const:`REDUCED_RATE`
@@ -68,7 +207,7 @@ def generate(file_obj,
         quarter = ((today.month - 4) // 3) % 4 + 1
 
     template_stream = pkg_resources.resource_stream('vat.gb.moss',
-                                                    'resources/return-template.xlsx')
+                                                    'resources/return-template.ods')
       
     with zipfile.ZipFile(template_stream, 'r') as template:
         with zipfile.ZipFile(file_obj, 'w') as output:
@@ -76,66 +215,28 @@ def generate(file_obj,
             # and parse)
             for item in template.infolist():
                 data = template.read(item)
-                if item.filename == 'xl/worksheets/sheet1.xml':
-                    # This is the UK supplies worksheet
-                    uk_sheet = etree.fromstring(data)
-                    uk_info = item
-                elif item.filename == 'xl/worksheets/sheet2.xml':
-                    # This is the Fixed Establishment supplies worksheet
-                    fe_sheet = etree.fromstring(data)
-                    fe_info = item
-                elif item.filename == 'xl/sharedStrings.xml':
-                    # This is the shared strings file
-                    sst = etree.fromstring(data)
-                    sst_index = dict()
-                    
-                    for ndx,si in enumerate(sst.findall('./{*}si')):
-                        key = etree.tostring(si)
-                        sst_index[key] = ndx
-                        
-                    class SSTProps (object):
-                        pass
-                    sst_props = SSTProps()
-                    sst_props.count = int(sst.attrib['count'])
-                    sst_props.unique = int(sst.attrib['uniqueCount'])
-                    sst_info = item
+                if item.filename == 'content.xml':
+                    content = etree.fromstring(data)
+                    content_info = item
+                    uk_sheet = Sheet(table(content, 'UK_SUPPLIES'))
+                    fe_sheet = Sheet(table(content,
+                                           'FIXED_ESTABLISHMENT_SUPPLIES'))
                 else:
                     output.writestr(item, data)
 
-            def s(s):
-                t_elt = etree.Element('t')
-                t_elt.text = s
-                si_elt = etree.Element('si')
-                si_elt.append(t_elt)
-
-                key = etree.tostring(si_elt)
-
-                sid = sst_index.get(key, None)
-
-                if sid is None:
-                    sst.append(si_elt)
-                    sid = sst_props.unique
-                    sst_index[key] = sid
-                    sst_props.unique += 1
-                    
-                sst_props.count += 1
-                
-                return sid
-
             # Build the Quarter field
-            quarter = s('Q%s/%s' % (quarter, year))
+            quarter = 'Q%s/%s' % (quarter, year)
 
             # Set up for two dp
             two_dp = decimal.Decimal('.01')
             
             # Fill-in the UK supplies worksheet
-            e10 = cell(uk_sheet, 'E10')
-            e10.attrib['t'] = 's'
+            e10 = uk_sheet.cell('E10')
             e10[:] = [v(quarter)]
 
             made_supplies = False
             for ndx,supply in enumerate(uk_supplies):
-                msc,rate_type,rate,net_value = supply
+                msc,rate_type,rate,net_value,vat_due = supply
 
                 if ndx == 150:
                     raise TooManySupplies()
@@ -144,36 +245,34 @@ def generate(file_obj,
                     msc = MemberState.by_code(msc)
 
                 row_ndx = ndx + 17
-                row = uk_sheet.find('./{*}sheetData/{*}row[@r="%s"]' % row_ndx)
-                msc_cell = row.find('./{*}c[@r="D%s"]' % row_ndx)
-                msc_cell.attrib['t'] = 's'
-                msc_cell[:] = [v(s(msc.name))]
-                rtype_cell = row.find('./{*}c[@r="E%s"]' % row_ndx)
-                rtype_cell.attrib['t'] = 's'
-                rtype_cell[:] = [v(s(rate_type))]
-                rate_cell = row.find('./{*}c[@r="F%s"]' % row_ndx)
+
+                msc_cell = uk_sheet.cell('D%s' % row_ndx)
+                msc_cell[:] = [v(msc.name)]
+                rtype_cell = uk_sheet.cell('E%s' % row_ndx)
+                rtype_cell[:] = [v(rate_type)]
+                rate_cell = uk_sheet.cell('F%s' % row_ndx)
                 rate_cell[:] = [v(decimal.Decimal(rate).quantize(two_dp))]
-                net_cell = row.find('./{*}c[@r="G%s"]' % row_ndx)
+                net_cell = uk_sheet.cell('G%s' % row_ndx)
                 net_cell[:] = [v(decimal.Decimal(net_value).quantize(two_dp))]
+                vat_cell = uk_sheet.cell('H%s' % row_ndx)
+                vat_cell[:] = [v(decimal.Decimal(vat_due).quantize(two_dp))]
                 made_supplies = True
 
             if made_supplies:
-                made_supplies = s('Yes')
+                made_supplies = 'Yes'
             else:
-                made_supplies = s('No')
+                made_supplies = 'No'
                 
-            e12 = cell(uk_sheet, 'E12')
-            e12.attrib['t'] = 's'
+            e12 = uk_sheet.cell('E12')
             e12[:] = [v(made_supplies)]
             
             # Fill-in the fixed establishment worksheet
-            e11 = cell(fe_sheet, 'E11')
-            e11.attrib['t'] = 's'
+            e11 = fe_sheet.cell('E11')
             e11[:] = [v(quarter)]
 
             made_supplies = False
             for ndx,supply in enumerate(fe_supplies):
-                vat_number,msc,rate_type,rate,net_value = supply
+                vat_number,msc,rate_type,rate,net_value,vat_due = supply
 
                 if ndx == 150:
                     raise TooManySupplies()
@@ -182,36 +281,29 @@ def generate(file_obj,
                     msc = MemberState.by_code(msc)
 
                 row_ndx = ndx + 18
-                row = fe_sheet.find('./{*}sheetData/{*}row[@r="%s"]' % row_ndx)
-                vn_cell = row.find('./{*}c[@r="D%s"]' % row_ndx)
-                vn_cell.attrib['t'] = 's'
-                vn_cell[:] = [v(s(vat_number))]
-                msc_cell = row.find('./{*}c[@r="E%s"]' % row_ndx)
-                msc_cell.attrib['t'] = 's'
-                msc_cell[:] = [v(s(msc.name))]
-                rtype_cell = row.find('./{*}c[@r="F%s"]' % row_ndx)
-                rtype_cell.attrib['t'] = 's'
-                rtype_cell[:] = [v(s(rate_type))]
-                rate_cell = row.find('./{*}c[@r="G%s"]' % row_ndx)
+
+                vn_cell = fe_sheet.cell('D%s' % row_ndx)
+                vn_cell[:] = [v(vat_number)]
+                msc_cell = fe_sheet.cell('E%s' % row_ndx)
+                msc_cell[:] = [v(msc.name)]
+                rtype_cell = fe_sheet.cell('F%s' % row_ndx)
+                rtype_cell[:] = [v(rate_type)]
+                rate_cell = fe_sheet.cell('G%s' % row_ndx)
                 rate_cell[:] = [v(decimal.Decimal(rate).quantize(two_dp))]
-                net_cell = row.find('./{*}c[@r="H%s"]' % row_ndx)
+                net_cell = fe_sheet.cell('H%s' % row_ndx)
                 net_cell[:] = [v(decimal.Decimal(net_value).quantize(two_dp))]
-                made_supplies = True              
+                vat_cell = fe_sheet.cell('I%s' % row_ndx)
+                vat_cell[:] = [v(decimal.Decimal(vat_due).quantize(two_dp))]
+                made_supplies = True
 
             if made_supplies:
-                made_supplies = s('Yes')
+                made_supplies = 'Yes'
             else:
-                made_supplies = s('No')
+                made_supplies = 'No'
                 
-            e13 = cell(fe_sheet, 'E13')
-            e13.attrib['t'] = 's'
+            e13 = fe_sheet.cell('E13')
             e13[:] = [v(made_supplies)]
 
-            # Write the shared string table
-            sst.attrib['count'] = str(sst_props.count)
-            sst.attrib['uniqueCount'] = str(sst_props.unique)
-            output.writestr(sst_info, etree.tostring(sst, encoding='utf8'))
-            
             # Write the worksheets
-            output.writestr(uk_info, etree.tostring(uk_sheet, encoding='utf8'))
-            output.writestr(fe_info, etree.tostring(fe_sheet, encoding='utf8'))
+            output.writestr(content_info,
+                            etree.tostring(content, encoding='utf8'))
