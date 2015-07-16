@@ -113,9 +113,11 @@ MS = MemberState
 #             information on the thresholds that now apply (since LTL is no longer in use); I've rounded
 #             to the nearest round Euro amount for now.
 
+# 2015-07-15: There were rate changes for Luxembourg on 2015-03-31
+
 # Update these dates when you update the table below; they should reflect the dates of the update, not any dates
 # you might see on the documents above.
-vat_rate_update_date = datetime.date(2015, 1, 1)
+vat_rate_update_date = datetime.date(2015, 7, 16)
 threshold_update_date = datetime.date(2015, 1, 1)
 
 # ********************************************************************************************************************
@@ -151,7 +153,7 @@ member_states = [
     MS('CY', 'CY', 'Cyprus',          19.0,      (9.0,  5.0),  None,  None,    'EUR',     'EUR 10251.00',   'EUR 35000.00',   'EUR 15600.00',  r'\d{8}[A-Z]'),
     MS('LV', 'LV', 'Latvia',          21.0,            12.0,   None,  None,    'EUR',     'EUR 10000.00',   'EUR 35000.00',   'EUR 50000.00',  r'\d{11}'),
     MS('LT', 'LT', 'Lithuania',       21.0,      (9.0,  5.0),  None,  None,    'EUR',     'EUR 10000.00',   'EUR 35000.00',   'EUR 45000.00',  r'\d{9}(?:\d{3})?'),
-    MS('LU', 'LU', 'Luxembourg',      15.0,     (12.0,  6.0),   3.0,  12.0,    'EUR',     'EUR 10000.00',  'EUR 100000.00',   'EUR 25000.00',  r'\d{8}'),
+    MS('LU', 'LU', 'Luxembourg',      17.0,             8.0,   3.0,   14.0,    'EUR',     'EUR 10000.00',  'EUR 100000.00',   'EUR 25000.00',  r'\d{8}'),
     MS('HU', 'HU', 'Hungary',         27.0,     (18.0,  5.0),  None,  None,    'HUF',     'EUR 35000.00',   'EUR 35000.00', 'HUF 6000000.00',  r'\d{8}'),
     MS('MT', 'MT', 'Malta',           18.0,      (7.0,  5.0),  None,  None,    'EUR',     'EUR 10000.00',   'EUR 35000.00',  ('EUR 14000.00',
                                                                                                                               'EUR 24000.00',
