@@ -59,10 +59,10 @@ test_numbers = [
        'city': 'Lisboa',
        'postcode': '1269-073' }),
     ('SE516406033601',
-     { 'name': 'Santander Consumer Bank',
-       'street': 'Box 1341',
-       'city': 'Solna',
-       'postcode': '171 26' }),
+     { 'name': 'Santander Consumer Bank AS Norge, Sverige Filial',
+       'street': 'FE 302',
+       'city': 'Stockholm',
+       'postcode': '171 75' }),
 
     # The National Bank of Greece
     ('EL094014201',
