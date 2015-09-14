@@ -14,6 +14,7 @@ Contents:
    vat-primer
    vat-package
    vat-vies
+   vat-vrws
    vat-gb
 
 Indices and tables

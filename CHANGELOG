@@ -1,0 +1,21 @@
+0.3.0
+	Added support for the VatRateWebService from europa.eu, instead of
+	hard-coding VAT rates.  This fetches data from the TIC.
+
+	The VAT rate methods on the MemberState objects are deprecated in
+	favour of applications constructing their own vat.RateCache object
+	and querying for rates from that.
+
+0.2.0
+	Added a text version of the regular expression on the MemberState
+	objects.
+
+	Escape single quotes for VIES.
+
+	Updated MOSS template.
+
+0.1.1
+	Added documentation, fixed a minor bug in the build process.
+
+0.1.0
+	Initial release.

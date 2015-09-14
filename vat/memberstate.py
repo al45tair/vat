@@ -5,9 +5,11 @@ import decimal
 from decimal import Decimal as d
 import datetime
 import re
+from .rates import RateCache
 
 _alpha_2_map = {}
 _code_map = {}
+_rate_cache = RateCache()
 
 class Threshold(object):
     def __init__(self, currency, amount):
@@ -17,8 +19,6 @@ class Threshold(object):
 class MemberState(object):
     """Represents and holds information about an EU member state."""
     def __init__(self, code, iso_alpha_2, name,
-                 standard_rate, reduced_rates,
-                 super_reduced_rate, parking_rate,
                  currency,
                  special_scheme_threshold,
                  distance_selling_threshold,
@@ -58,18 +58,6 @@ class MemberState(object):
         # The name of this Member State (in English)
         self.name = name
 
-        # The standard VAT rate (e.g. 20% = 0.2)
-        self.standard_rate = to_rate(standard_rate)
-
-        # The reduced VAT rates (a tuple, or None)
-        self.reduced_rates = to_rates(reduced_rates)
-
-        # The super reduced rate (or None)
-        self.super_reduced_rate = to_rate(super_reduced_rate)
-
-        # The "parking" rate (or None)
-        self.parking_rate = to_rate(parking_rate)
-
         # A regular expression (as a string) matching the VAT number format
         self.number_regex = '^(%s)$' % number_format
         
@@ -90,7 +78,29 @@ class MemberState(object):
         
         _alpha_2_map[iso_alpha_2] = self
         _code_map[code] = self
-        
+
+    @property
+    def standard_rate(self):
+        return _rate_cache.standard_rate(self.code).rate / 100
+
+    @property
+    def reduced_rates(self):
+        return tuple([r.rate/100 for r in _rate_cache.reduced_rates(self.code) if r.detail not in ('Super Reduced', 'Parking')])
+
+    @property
+    def super_reduced_rate(self):
+        for r in _rate_cache.reduced_rates(self.code):
+            if r.detail == 'Super Reduced':
+                return r.rate / 100
+        return None
+
+    @property
+    def parking_rate(self):
+        for r in _rate_cache.reduced_rates(self.code):
+            if r.detail == 'Parking':
+                return r.rate / 100
+        return None
+    
     @staticmethod
     def by_code(code):
         return _code_map[code]
@@ -115,9 +125,11 @@ MS = MemberState
 
 # 2015-07-15: There were rate changes for Luxembourg on 2015-03-31
 
+# 2015-09-14: Removed VAT rates from this code in favour of using the EU's web service to retrieve them.
+
 # Update these dates when you update the table below; they should reflect the dates of the update, not any dates
 # you might see on the documents above.
-vat_rate_update_date = datetime.date(2015, 7, 16)
+vat_rate_update_date = datetime.date.today()
 threshold_update_date = datetime.date(2015, 1, 1)
 
 # ********************************************************************************************************************
@@ -133,41 +145,41 @@ threshold_update_date = datetime.date(2015, 1, 1)
 # All member states, along with their VAT information.  Note that some countries have multiple small VAT thresholds; note also Hungary, which quotes
 # its special and distance thresholds in Euros even though it uses the Forint.
 member_states = [
-    #  code  iso   name               rates                                    currency  thresholds                                            number format
-    #                                 standard  reduced        super  parking                   special          distance             small
-    MS('BE', 'BE', 'Belgium',         21.0,     (12.0,  6.0),  None,  12.0,    'EUR',     'EUR 11200.00',   'EUR 35000.00',   'EUR 15000.00',  r'\d{10}'),
-    MS('BG', 'BG', 'Bulgaria',        20.0,             9.0,   None,  None,    'BGN',     'BGN 20000.00',   'BGN 70000.00',   'BGN 50000.00',  r'\d{9,10}'),
-    MS('CZ', 'CZ', 'Czech Republic',  21.0,            15.0,   None,  None,    'CZK',    'CZK 326000.00', 'CZK 1140000.00', 'CZK 1000000.00',  r'\d{8,10}'),
-    MS('DK', 'DK', 'Denmark',         25.0,            None,   None,  None,    'DKK',     'DKK 80000.00',  'DKK 280000.00',   'DKK 50000.00',  r'(?:\d{2}\s*){3}\d{2}'),
-    MS('DE', 'DE', 'Germany',         19.0,             7.0,   None,  None,    'EUR',     'EUR 12500.00',  'EUR 100000.00',   'EUR 17500.00',  r'\d{9}'),
-    MS('EE', 'EE', 'Estonia',         20.0,             9.0,   None,  None,    'EUR',     'EUR 10000.00',   'EUR 35000.00',   'EUR 16000.00',  r'\d{9}'),
-    MS('EL', 'GR', 'Greece',          23.0,     (13.0,  6.5),  None,  None,    'EUR',     'EUR 10000.00',   'EUR 35000.00',   ('EUR 5000.00',
-                                                                                                                              'EUR 10000.00'), r'\d{9}'),
-    MS('ES', 'ES', 'Spain',           21.0,            10.0,    4.0,  None,    'EUR',     'EUR 10000.00',   'EUR 35000.00',            None,   r'[A-Z\d]\d{7}[A-Z\d]'),
-    MS('FR', 'FR', 'France',          20.0,     (10.0,  5.5),   2.1,  None,    'EUR',     'EUR 10000.00',  'EUR 100000.00',  ('EUR 34900.00',
-                                                                                                                              'EUR 90300.00'), r'[A-Z\d]{2}\s*\d{9}'),
-    MS('HR', 'HR', 'Croatia',         25.0,     (13.0,  5.0),  None,  None,    'HRK',     'HRK 77000.00',  'HRK 270000.00',  'HRK 230000.00',  r'\d{11}'),
-    MS('IE', 'IE', 'Ireland',         23.0,     (13.5,  9.0),   4.8,  13.5,    'EUR',     'EUR 41000.00',   'EUR 35000.00',  ('EUR 37500.00',
-                                                                                                                              'EUR 75000.00'), r'\d[A-Z\d+*]\d{5}[A-Z]{1,2}'),
-    MS('IT', 'IT', 'Italy',           22.0,            10.0,    4.0,  None,    'EUR',     'EUR 10000.00',   'EUR 35000.00',   'EUR 30000.00',  r'\d{11}'),
-    MS('CY', 'CY', 'Cyprus',          19.0,      (9.0,  5.0),  None,  None,    'EUR',     'EUR 10251.00',   'EUR 35000.00',   'EUR 15600.00',  r'\d{8}[A-Z]'),
-    MS('LV', 'LV', 'Latvia',          21.0,            12.0,   None,  None,    'EUR',     'EUR 10000.00',   'EUR 35000.00',   'EUR 50000.00',  r'\d{11}'),
-    MS('LT', 'LT', 'Lithuania',       21.0,      (9.0,  5.0),  None,  None,    'EUR',     'EUR 10000.00',   'EUR 35000.00',   'EUR 45000.00',  r'\d{9}(?:\d{3})?'),
-    MS('LU', 'LU', 'Luxembourg',      17.0,             8.0,   3.0,   14.0,    'EUR',     'EUR 10000.00',  'EUR 100000.00',   'EUR 25000.00',  r'\d{8}'),
-    MS('HU', 'HU', 'Hungary',         27.0,     (18.0,  5.0),  None,  None,    'HUF',     'EUR 35000.00',   'EUR 35000.00', 'HUF 6000000.00',  r'\d{8}'),
-    MS('MT', 'MT', 'Malta',           18.0,      (7.0,  5.0),  None,  None,    'EUR',     'EUR 10000.00',   'EUR 35000.00',  ('EUR 14000.00',
-                                                                                                                              'EUR 24000.00',
-                                                                                                                              'EUR 35000.00'), r'\d{8}'),
-    MS('NL', 'NL', 'Netherlands',     21.0,             6.0,   None,  None,    'EUR',     'EUR 10000.00',  'EUR 100000.00',            None,   r'\d{9}B\d{2}'),
-    MS('AT', 'AT', 'Austria',         20.0,            10.0,   None,  12.0,    'EUR',     'EUR 11000.00',   'EUR 35000.00',   'EUR 30000.00',  r'U\d{8}'),
-    MS('PL', 'PL', 'Poland',          23.0,      (8.0,  5.0),  None,  None,    'PLN',     'PLN 50000.00',  'PLN 160000.00',  'PLN 150000.00',  r'\d{10}'),
-    MS('PT', 'PT', 'Portugal',        23.0,     (13.0,  6.0),  None,  13.0,    'EUR',     'EUR 10000.00',   'EUR 35000.00',  ('EUR 10000.00',
-                                                                                                                              'EUR 12500.00'), r'\d{9}'),
-    MS('RO', 'RO', 'Romania',         24.0,      (9.0,  5.0),  None,  None,    'RON',     'RON 34000.00',  'RON 118000.00',  'RON 220000.00',  r'\d{2,10}'),
-    MS('SI', 'SI', 'Slovenia',        22.0,             9.5,   None,  None,    'EUR',     'EUR 10000.00',   'EUR 35000.00',   'EUR 50000.00',  r'\d{8}'),
-    MS('SK', 'SK', 'Slovakia',        20.0,            10.0,   None,  None,    'EUR',     'EUR 13941.00',   'EUR 35000.00',   'EUR 49790.00',  r'\d{10}'),
-    MS('FI', 'FI', 'Finland',         24.0,     (14.0, 10.0),  None,  None,    'EUR',     'EUR 10000.00',   'EUR 35000.00',    'EUR 8500.00',  r'\d{8}'),
-    MS('SE', 'SE', 'Sweden',          25.0,     (12.0,  6.0),  None,  None,    'SEK',     'SEK 90000.00',  'SEK 320000.00',            None,   r'\d{12}'),
-    MS('GB', 'GB', 'United Kingdom',  20.0,             5.0,   None,  None,    'GBP',     'GBP 81000.00',   'GBP 70000.00',   'GBP 81000.00',  r'\d{3}\s*\d{4}\s*\d{2}(?:\s*\d{3})?|GD\d{3}|HA\d{3}'),
+    #  code  iso   name               currency  thresholds                                            number format
+    #                                                  special          distance             small
+    MS('BE', 'BE', 'Belgium',         'EUR',     'EUR 11200.00',   'EUR 35000.00',   'EUR 15000.00',  r'\d{10}'),
+    MS('BG', 'BG', 'Bulgaria',        'BGN',     'BGN 20000.00',   'BGN 70000.00',   'BGN 50000.00',  r'\d{9,10}'),
+    MS('CZ', 'CZ', 'Czech Republic',  'CZK',    'CZK 326000.00', 'CZK 1140000.00', 'CZK 1000000.00',  r'\d{8,10}'),
+    MS('DK', 'DK', 'Denmark',         'DKK',     'DKK 80000.00',  'DKK 280000.00',   'DKK 50000.00',  r'(?:\d{2}\s*){3}\d{2}'),
+    MS('DE', 'DE', 'Germany',         'EUR',     'EUR 12500.00',  'EUR 100000.00',   'EUR 17500.00',  r'\d{9}'),
+    MS('EE', 'EE', 'Estonia',         'EUR',     'EUR 10000.00',   'EUR 35000.00',   'EUR 16000.00',  r'\d{9}'),
+    MS('EL', 'GR', 'Greece',          'EUR',     'EUR 10000.00',   'EUR 35000.00',   ('EUR 5000.00',
+                                                                                     'EUR 10000.00'), r'\d{9}'),
+    MS('ES', 'ES', 'Spain',           'EUR',     'EUR 10000.00',   'EUR 35000.00',            None,   r'[A-Z\d]\d{7}[A-Z\d]'),
+    MS('FR', 'FR', 'France',          'EUR',     'EUR 10000.00',  'EUR 100000.00',  ('EUR 34900.00',
+                                                                                     'EUR 90300.00'), r'[A-Z\d]{2}\s*\d{9}'),
+    MS('HR', 'HR', 'Croatia',         'HRK',     'HRK 77000.00',  'HRK 270000.00',  'HRK 230000.00',  r'\d{11}'),
+    MS('IE', 'IE', 'Ireland',         'EUR',     'EUR 41000.00',   'EUR 35000.00',  ('EUR 37500.00',
+                                                                                     'EUR 75000.00'), r'\d[A-Z\d+*]\d{5}[A-Z]{1,2}'),
+    MS('IT', 'IT', 'Italy',           'EUR',     'EUR 10000.00',   'EUR 35000.00',   'EUR 30000.00',  r'\d{11}'),
+    MS('CY', 'CY', 'Cyprus',          'EUR',     'EUR 10251.00',   'EUR 35000.00',   'EUR 15600.00',  r'\d{8}[A-Z]'),
+    MS('LV', 'LV', 'Latvia',          'EUR',     'EUR 10000.00',   'EUR 35000.00',   'EUR 50000.00',  r'\d{11}'),
+    MS('LT', 'LT', 'Lithuania',       'EUR',     'EUR 10000.00',   'EUR 35000.00',   'EUR 45000.00',  r'\d{9}(?:\d{3})?'),
+    MS('LU', 'LU', 'Luxembourg',      'EUR',     'EUR 10000.00',  'EUR 100000.00',   'EUR 25000.00',  r'\d{8}'),
+    MS('HU', 'HU', 'Hungary',         'HUF',     'EUR 35000.00',   'EUR 35000.00', 'HUF 6000000.00',  r'\d{8}'),
+    MS('MT', 'MT', 'Malta',           'EUR',     'EUR 10000.00',   'EUR 35000.00',  ('EUR 14000.00',
+                                                                                     'EUR 24000.00',
+                                                                                     'EUR 35000.00'), r'\d{8}'),
+    MS('NL', 'NL', 'Netherlands',     'EUR',     'EUR 10000.00',  'EUR 100000.00',            None,   r'\d{9}B\d{2}'),
+    MS('AT', 'AT', 'Austria',         'EUR',     'EUR 11000.00',   'EUR 35000.00',   'EUR 30000.00',  r'U\d{8}'),
+    MS('PL', 'PL', 'Poland',          'PLN',     'PLN 50000.00',  'PLN 160000.00',  'PLN 150000.00',  r'\d{10}'),
+    MS('PT', 'PT', 'Portugal',        'EUR',     'EUR 10000.00',   'EUR 35000.00',  ('EUR 10000.00',
+                                                                                     'EUR 12500.00'), r'\d{9}'),
+    MS('RO', 'RO', 'Romania',         'RON',     'RON 34000.00',  'RON 118000.00',  'RON 220000.00',  r'\d{2,10}'),
+    MS('SI', 'SI', 'Slovenia',        'EUR',     'EUR 10000.00',   'EUR 35000.00',   'EUR 50000.00',  r'\d{8}'),
+    MS('SK', 'SK', 'Slovakia',        'EUR',     'EUR 13941.00',   'EUR 35000.00',   'EUR 49790.00',  r'\d{10}'),
+    MS('FI', 'FI', 'Finland',         'EUR',     'EUR 10000.00',   'EUR 35000.00',    'EUR 8500.00',  r'\d{8}'),
+    MS('SE', 'SE', 'Sweden',          'SEK',     'SEK 90000.00',  'SEK 320000.00',            None,   r'\d{12}'),
+    MS('GB', 'GB', 'United Kingdom',  'GBP',     'GBP 81000.00',   'GBP 70000.00',   'GBP 81000.00',  r'\d{3}\s*\d{4}\s*\d{2}(?:\s*\d{3})?|GD\d{3}|HA\d{3}'),
     ]
     
