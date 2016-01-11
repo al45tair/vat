@@ -1,2 +1,2 @@
 recursive-include vat/gb/moss/resources *
-tests/*.py
+recursive-include tests *.py
