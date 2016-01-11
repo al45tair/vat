@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
-from setuptools import setup, find_packages
+from setuptools import setup
 from setuptools.command.test import test as TestCommand
 
 class PyTest(TestCommand):
@@ -19,14 +19,14 @@ with open('README.rst', 'rb') as f:
         
 setup(
     name='vat',
-    version='0.3.0',
+    version='0.3.1',
     description='A python package for dealing with VAT',
     long_description=long_desc,
     author='Alastair Houghton',
     author_email='alastair@alastairs-place.net',
     url='http://bitbucket.org/al45tair/vat',
     license='MIT License',
-    packages=find_packages(),
+    packages=['vat'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: MIT License',

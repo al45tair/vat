@@ -1,1 +1,2 @@
 recursive-include vat/gb/moss/resources *
+tests/*.py
