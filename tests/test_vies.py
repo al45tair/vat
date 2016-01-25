@@ -70,6 +70,14 @@ test_numbers = [
        'street': 'Αιόλου 86',
        'city': 'Αθήνα',
        'postcode': '10232' }),
+
+    # This one turned out to be awkward
+    ('HU13632874',
+     { 'name': 'Greenfinity LLC',
+       'street': 'Puskin utca 19',
+       'city': 'Budapest',
+       'state': 'Pest megye',
+       'postcode': '1088' }),
 ]
 
 bad_info = { 'name': 'I am a great big rabbit' }
