@@ -3,7 +3,8 @@ from __future__ import unicode_literals
 
 from . import vies, addresscmp
 
-def check_details(vat_number, vat_info={}, requester=None, address_threshold=0.7):
+def check_details(vat_number, vat_info={}, requester=None,
+                  address_threshold=0.65):
     """Check a VAT number using VIES.  Unlike the functions in
     :py:mod:`vat.vies`, this deals with the fact that different member states
     may behave in different ways, and will always try to do a reasonable job.
@@ -76,7 +77,20 @@ def check_details(vat_number, vat_info={}, requester=None, address_threshold=0.7
         user_address = ' '.join(user_address)
 
         score = addresscmp.compare(vies_address, user_address)
-        if score < address_threshold:
-            return (False, response)
+        if score >= address_threshold:
+            return (True, response)
+
+        user_address = []
+        for item in ['street', 'postcode', 'city']:
+            info = vat_info.get(item, None)
+            if info:
+                user_address.append(info)
+        user_address = ' '.join(user_address)
+
+        score = addresscmp.compare(vies_address, user_address)
+        if score >= address_threshold:
+            return (True, response)
+        
+        return (False, response)
 
     return (True, response)
