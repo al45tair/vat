@@ -64,18 +64,21 @@ class VRWSSOAPException(VRWSException):
         return str(self.__unicode__())    
 
 class VRWSHTTPException(VRWSException):
-    def __init__(self, code, message):
+    def __init__(self, code, message, body):
         self.code = code
         self.message = message
+        self.body = body
 
     def __repr__(self):
-        return 'VIESHTTPException(%r, %r)' % (self.code, self.message)
+        return 'VIESHTTPException(%r, %r, %r)' % (self.code,
+                                                  self.message,
+                                                  self.body)
 
     def __unicode__(self):
-        return '%s - %s' % (self.code, self.message)
+        return '%s - %s\n%s' % (self.code, self.message, self.body)
 
     def __str__(self):
-        return str(self.__unicode__())        
+        return str(self.__unicode__())
 
 class Rate(object):
     """Represents an individual VAT rate."""
@@ -134,6 +137,7 @@ def send_message(message):
     while response is None or (tries < 5
                                and response.status >= 500
                                and response.status <= 599):
+        body = None
         if tries > 0:
             if response is not None:
                 # Cope with badly behaved web service returning 500 for non-
@@ -166,7 +170,7 @@ def send_message(message):
         response = conn.getresponse()
 
     if response.status != 200:
-        raise VRWSHTTPException(response.status, response.reason)
+        raise VRWSHTTPException(response.status, response.reason, body)
 
     return response
 
