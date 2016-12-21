@@ -78,7 +78,8 @@ class VRWSHTTPException(VRWSException):
 
     def __unicode__(self):
         return '%s - %s\n%s\n%s' % (self.code, self.message,
-                                    ['%s: %s\n' % h for h in self.headers],
+                                    ''.join(['%s: %s\n' % h \
+                                             for h in self.headers]),
                                     self.body)
 
     def __str__(self):
