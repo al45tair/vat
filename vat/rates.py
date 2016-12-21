@@ -63,7 +63,7 @@ class RateCache (object):
                 return rinfo[0]
         try:
             rates = vrws.get_rates(member_state, date=today)
-        except VRWSException:
+        except vrws.VRWSException:
             rates = tic.get_rates(member_state, date=today)
 
         self.rates[member_state] = (rates, today)
