@@ -137,7 +137,6 @@ def send_message(message):
     while response is None or (tries < 5
                                and response.status >= 500
                                and response.status <= 599):
-        body = None
         if tries > 0:
             if response is not None:
                 # Cope with badly behaved web service returning 500 for non-
@@ -170,7 +169,8 @@ def send_message(message):
         response = conn.getresponse()
 
     if response.status != 200:
-        raise VRWSHTTPException(response.status, response.reason, body)
+        raise VRWSHTTPException(response.status, response.reason,
+                                response.read())
 
     return response
 
