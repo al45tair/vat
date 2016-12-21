@@ -10,7 +10,7 @@ import six
 from six.moves import urllib
 from lxml.html import soupparser
 
-from vrws import Rate, Rates
+from .vrws import Rate, Rates
 
 TIC_VATRATESEARCH = str('http://ec.europa.eu/taxation_customs/tic/public/vatRates/vatratesSearch.html')
 

@@ -4,6 +4,7 @@ import datetime
 from decimal import Decimal as D
 
 from . import vrws
+from . import tic
 
 class RateCache (object):
     """Manages a cache of VAT rates fetched from europa.eu's
@@ -60,7 +61,11 @@ class RateCache (object):
         if rinfo is not None:
             if rinfo[1] == today:
                 return rinfo[0]
-        rates = vrws.get_rates(member_state, date=today)
+        try:
+            rates = vrws.get_rates(member_state, date=today)
+        except VRWSException:
+            rates = tic.get_rates(member_state, date=today)
+
         self.rates[member_state] = (rates, today)
         return rates
 
