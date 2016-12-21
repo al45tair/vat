@@ -64,18 +64,22 @@ class VRWSSOAPException(VRWSException):
         return str(self.__unicode__())    
 
 class VRWSHTTPException(VRWSException):
-    def __init__(self, code, message, body):
+    def __init__(self, code, message, headers, body):
         self.code = code
         self.message = message
+        self.headers = headers
         self.body = body
 
     def __repr__(self):
-        return 'VIESHTTPException(%r, %r, %r)' % (self.code,
-                                                  self.message,
-                                                  self.body)
+        return 'VIESHTTPException(%r, %r, %r, %r)' % (self.code,
+                                                      self.message,
+                                                      self.headers,
+                                                      self.body)
 
     def __unicode__(self):
-        return '%s - %s\n%s' % (self.code, self.message, self.body)
+        return '%s - %s\n%s\n%s' % (self.code, self.message,
+                                    ['%s: %s\n' % h for h in self.headers],
+                                    self.body)
 
     def __str__(self):
         return str(self.__unicode__())
@@ -170,6 +174,7 @@ def send_message(message):
 
     if response.status != 200:
         raise VRWSHTTPException(response.status, response.reason,
+                                response.getheaders(),
                                 response.read())
 
     return response
