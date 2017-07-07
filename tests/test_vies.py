@@ -128,9 +128,9 @@ def test_non_compliant_vies():
 def test_all_vies():
     """Test all the numbers we have above, to make sure that we think they
     match."""
-    for vat_number, details in test_numbers:
+    def do_safely(fn):
         try:
-            valid, response = vat.check_details(vat_number, details)
+            result = fn()
         except vat.VIESHTTPException as e:
             if e.code >= 500 and e.code <= 599:
                 pytest.skip('EU VIES server is malfunctioning, so skipping test')
@@ -149,6 +149,11 @@ def test_all_vies():
                 pytest.skip('EU VIES server too busy, skipping test')
             else:
                 raise
+        return result
+
+    for vat_number, details in test_numbers:
+        valid, response = do_safely(lambda: vat.check_details(vat_number,
+                                                              details))
 
         if vat_number.startswith('DE'):
             assert valid == None
@@ -158,5 +163,7 @@ def test_all_vies():
 
             assert valid == True
 
-            valid, response = vat.check_details(vat_number, bad_info)
+            valid, response = do_safely(lambda: vat.check_details(vat_number,
+                                                                  bad_info))
+
             assert valid == False
