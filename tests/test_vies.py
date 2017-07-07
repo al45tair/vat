@@ -136,13 +136,26 @@ def test_all_vies():
                 pytest.skip('EU VIES server is malfunctioning, so skipping test')
             else:
                 raise
-        
+        except vat.VIESSOAPException as e:
+            if e.string == 'MS_UNAVAILABLE':
+                pytest.skip('EU VIES server reports member state unavailable, '
+                            'skipping test')
+            elif e.string == 'SERVICE_UNAVAILABLE':
+                pytest.skip('EU VIES server unavailable, skipping test')
+            elif e.string == 'TIMEOUT':
+                pytest.skip('EU VIES server timed-out trying to talk to '
+                            'member state, skipping test')
+            elif e.string == 'SERVER_BUSY':
+                pytest.skip('EU VIES server too busy, skipping test')
+            else:
+                raise
+
         if vat_number.startswith('DE'):
             assert valid == None
         else:
             if valid != True:
                 print('%s %r' % (vat_number, details))
-                
+
             assert valid == True
 
             valid, response = vat.check_details(vat_number, bad_info)

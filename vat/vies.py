@@ -31,7 +31,24 @@ class VIESSOAPException(VIESException):
             self.fault_type = m.group(0)
         else:
             self.fault_type = 'UNKNOWN'
-        
+
+    @classmethod
+    def from_fault(cls, fault):
+        def contents(name):
+            value = fault.find('./' + SOAP_NS + name)
+            if value is None:
+                value = fault.find('./' + name)
+            if value is not None:
+                value = value.text
+            return value
+
+        faultcode = contents('faultcode')
+        faultstring = contents('faultstring')
+        faultactor = contents('faultactor')
+        detail = contents('detail')
+
+        return cls(faultcode, faultstring, faultactor, detail)
+
     def __repr__(self):
         return 'VIESSOAPException(%r, %r, %r, %r)' % (self.code,
                                                       self.string,
@@ -174,12 +191,8 @@ def check_vat(vat_number):
 
     fault = root.find('./' + SOAP_NS + 'Body/' + SOAP_NS + 'Fault')
 
-    if fault:
-        faultcode = fault.find('./' + SOAP_NS + 'faultcode').text
-        faultstring = fault.find('./' + SOAP_NS + 'faultstring').text
-        faultactor = fault.find('./' + SOAP_NS + 'faultactor').text
-        detail = fault.find('./' + SOAP_NS + 'detail').text
-        raise VIESSOAPException(faultcode, faultstring, faultactor, detail)
+    if fault is not None:
+        raise VIESSOAPException.from_fault(fault)
 
     resp = root.find('./' + SOAP_NS + 'Body/' + VIES_NS + 'checkVatResponse')
 
@@ -303,15 +316,13 @@ def check_vat_approx(vat_number, extra={}, requester=None):
     tree = etree.parse(response)
     root = tree.getroot()
 
-    if root.tag.lower() == SOAP_NS + 'fault':
-        faultcode = root.find('./' + SOAP_NS + 'faultcode').text
-        faultstring = root.find('./' + SOAP_NS + 'faultstring').text
-        faultactor = root.find('./' + SOAP_NS + 'faultactor').text
-        detail = root.find('./' + SOAP_NS + 'detail').text
-        raise VIESSOAPException(faultcode, faultstring, faultactor, detail)
-    
     if root.tag.lower() != SOAP_NS + 'envelope':
         raise ValueError('Bad SOAP reply "%s"' % etree.tostring(tree))
+
+    fault = root.find('./' + SOAP_NS + 'Body/' + SOAP_NS + 'Fault')
+
+    if fault is not None:
+        raise VIESSOAPException.from_fault(fault)
 
     resp = root.find('./' + SOAP_NS + 'Body/' + VIES_NS
                      + 'checkVatApproxResponse')
