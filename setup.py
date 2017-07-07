@@ -41,6 +41,7 @@ setup(
         },
     install_requires=[
         'six',
+        'beautifulsoup4',
         'lxml >= 3.4.0',
         'python-dateutil >= 1.5',
         'python-Levenshtein >= 0.11.2',
