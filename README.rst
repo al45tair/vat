@@ -2,6 +2,9 @@
 Python VAT
 ==========
 
+.. image:: https://travis-ci.org/al45tair/vat.svg?branch=master
+    :target: https://travis-ci.org/al45tair/vat
+
 What is this?
 -------------
 
