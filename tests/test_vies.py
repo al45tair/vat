@@ -19,7 +19,7 @@ test_numbers = [
     # public).
     ('GB466264724',
      { 'name': 'Santander UK plc',
-        'street': 'Group Taxation, Customer Services Centre, Narborough',
+        'street': 'Tax Department, B1 / F2 Carlton Park, Narborough',
         'postcode': 'LE19 0AL',
         'city': 'Leicester',
         'state': 'Leicestershire' }),

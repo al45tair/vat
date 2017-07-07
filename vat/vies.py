@@ -169,21 +169,23 @@ def check_vat(vat_number):
     tree = etree.parse(response)
     root = tree.getroot()
 
-    if root.tag.lower() == SOAP_NS + 'fault':
-        faultcode = root.find('./' + SOAP_NS + 'faultcode').text
-        faultstring = root.find('./' + SOAP_NS + 'faultstring').text
-        faultactor = root.find('./' + SOAP_NS + 'faultactor').text
-        detail = root.find('./' + SOAP_NS + 'detail').text
-        raise VIESSOAPException(faultcode, faultstring, faultactor, detail)
-    
     if root.tag.lower() != SOAP_NS + 'envelope':
         raise ValueError('Bad SOAP reply "%s"' % etree.tostring(tree))
+
+    fault = root.find('./' + SOAP_NS + 'Body/' + SOAP_NS + 'Fault')
+
+    if fault:
+        faultcode = fault.find('./' + SOAP_NS + 'faultcode').text
+        faultstring = fault.find('./' + SOAP_NS + 'faultstring').text
+        faultactor = fault.find('./' + SOAP_NS + 'faultactor').text
+        detail = fault.find('./' + SOAP_NS + 'detail').text
+        raise VIESSOAPException(faultcode, faultstring, faultactor, detail)
 
     resp = root.find('./' + SOAP_NS + 'Body/' + VIES_NS + 'checkVatResponse')
 
     if resp is None:
         raise ValueError('Bad SOAP reply "%s"' % etree.tostring(tree))
-    
+
     country_code = resp.find('./' + VIES_NS + 'countryCode').text
     number = resp.find('./' + VIES_NS + 'vatNumber').text
     request_date = _parse_date(resp.find('./' + VIES_NS + 'requestDate').text)
