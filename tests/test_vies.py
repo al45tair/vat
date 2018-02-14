@@ -140,6 +140,9 @@ def test_all_vies():
             if e.string == 'MS_UNAVAILABLE':
                 pytest.skip('EU VIES server reports member state unavailable, '
                             'skipping test')
+            elif e.string == 'MS_MAX_CONCURRENT_REQ':
+                pytest.skip('EU VIES server reports member state capacity '
+                            'exceeded, skipping test')
             elif e.string == 'SERVICE_UNAVAILABLE':
                 pytest.skip('EU VIES server unavailable, skipping test')
             elif e.string == 'TIMEOUT':
