@@ -169,7 +169,7 @@ def send_message(message):
         
             time.sleep(tries)
         tries += 1
-        conn = http_client.HTTPConnection(VRWS_HOST)
+        conn = http_client.HTTPSConnection(VRWS_HOST)
         conn.request(str('POST'), VRWS_PATH, message, headers)
         response = conn.getresponse()
 
