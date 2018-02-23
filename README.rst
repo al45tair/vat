@@ -89,19 +89,10 @@ installed on your machine (we suggest using pyenv for this):
 - 3.5.4
 - 3.6.4
 
-First, fork this repo into your own Github account, then clone the repo onto
-your machine.
+You'll also need tox installed somewhere globally.
 
-Then create a virtual environment and install the vat package:
+First, fork this repo into your own Github account, then clone the repo onto
+your machine, then run tox:
 
     $ cd PATH_TO_VAT_CLONE
-    $ virtualenv venv
-    $ . venv/bin/activate
-    $ pip install -e .
-
-Now you can run the tests:
-
-    $ pip install pytest tox
     $ tox
-
-
