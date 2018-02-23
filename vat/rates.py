@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 import datetime
+import six
 from decimal import Decimal as D
 
 from . import vrws
@@ -55,7 +56,7 @@ class RateCache (object):
         self.rates = {}
 
     def _get_rates(self, member_state):
-        if not isinstance(member_state, basestring):
+        if not isinstance(member_state, six.string_types):
             member_state = member_state.code
         today = datetime.date.today()
         rinfo = self.rates.get(member_state, None)

@@ -85,7 +85,7 @@ def get_rates(country, date=None):
         ('listOfTypes', 'Standard'),
         ('listOfTypes', 'Reduced'),
         ('listOfTypes', 'Category'),
-        ('dateFilter', format_date(date))])
+        ('dateFilter', format_date(date))]).encode('utf-8')
 
     f = urllib.request.urlopen(req)
 
