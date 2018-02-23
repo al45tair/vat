@@ -8,3 +8,6 @@
 .#*
 dist
 build
+/.pytest_cache
+/.tox
+/venv

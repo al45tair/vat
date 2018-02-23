@@ -74,3 +74,34 @@ Documentation
 
 The documentation for this package is available on `Read the Docs
 <http://vat.readthedocs.org/en/latest>`_.
+
+Contributing
+------------
+
+Here are some basic instructions for how to get the code running and testable
+on a developer's machine.
+
+To run the full suite of tests you'll need the following versions of python
+installed on your machine (we suggest using pyenv for this):
+
+- 2.7.13
+- 3.4.7
+- 3.5.4
+- 3.6.4
+
+First, fork this repo into your own Github account, then clone the repo onto
+your machine.
+
+Then create a virtual environment and install the vat package:
+
+    $ cd PATH_TO_VAT_CLONE
+    $ virtualenv venv
+    $ . venv/bin/activate
+    $ pip install -e .
+
+Now you can run the tests:
+
+    $ pip install pytest tox
+    $ tox
+
+
