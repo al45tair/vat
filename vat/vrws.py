@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import decimal
 from decimal import Decimal as D
 import re
 import time
 import datetime
-import six
 from six.moves import http_client
 from lxml import etree
 
@@ -22,11 +20,14 @@ ESERVICES = 'E-Services'
 VRWS_HOST = str('ec.europa.eu')
 VRWS_PATH = str('/taxation_customs/tic/services/VatRateWebService')
 
+
 class VRWSException(Exception):
     pass
 
+
 _error_re = re.compile(r'^VATRATE-ERR-([0-9]+) - (.*)$')
 _date_re = re.compile(r'^([0-9]{2,})-([0-9]{2})-([0-9]{2})$')
+
 
 class VRWSErrorException(VRWSException):
     def __init__(self, code, reason):
@@ -44,13 +45,14 @@ class VRWSErrorException(VRWSException):
     def __str__(self):
         return str(self.__unicode__())
 
+
 class VRWSSOAPException(VRWSException):
     def __init__(self, code, string, actor, detail):
         self.code = code
         self.string = string
         self.actor = actor
         self.detail = detail
-        
+
     def __repr__(self):
         return 'VRWSSOAPException(%r, %r, %r, %r)' % (self.code,
                                                       self.string,
@@ -61,7 +63,8 @@ class VRWSSOAPException(VRWSException):
         return '%s - %s (%s)\n%s' % (self.code, self.string, self.actor, self.detail)
 
     def __str__(self):
-        return str(self.__unicode__())    
+        return str(self.__unicode__())
+
 
 class VRWSHTTPException(VRWSException):
     def __init__(self, code, message, headers, body):
@@ -84,6 +87,7 @@ class VRWSHTTPException(VRWSException):
 
     def __str__(self):
         return str(self.__unicode__())
+
 
 class Rate(object):
     """Represents an individual VAT rate."""
@@ -110,7 +114,8 @@ class Rate(object):
 
     def __str__(self):
         return str(self.__unicode__())
-        
+
+
 class Rates(object):
     def __init__(self, types, categories, regions):
         # A dictionary indexed by rate type
@@ -121,21 +126,25 @@ class Rates(object):
 
         # A dictionary that contains any regional rates that may apply
         self.regions = regions
-    
+
+
 SOAP_NS = '{http://schemas.xmlsoap.org/soap/envelope/}'
 VRWS_NS = '{urn:ec.europa.eu:taxud:tic:services:VatRateWebService:types}'
 VRWS_NSM = '{urn:ec.europa.eu:taxud:tic:services:VatRateWebService}'
+
 
 def format_date(date):
     return '{y:04d}-{m:02d}-{d:02d}'.format(y=date.year,
                                             m=date.month,
                                             d=date.day)
 
+
 def send_message(message):
     message = message.encode('utf-8')
 
-    headers = { b'Content-Type': b'text/xml',
-                b'SOAPAction': b'urn:ec.europa.eu:taxud:tic:services:VatRateWebService' }
+    headers = {
+        b'Content-Type': b'text/xml',
+        b'SOAPAction': b'urn:ec.europa.eu:taxud:tic:services:VatRateWebService'}
 
     tries = 0
     response = None
@@ -163,10 +172,10 @@ def send_message(message):
                     m = _error_re.match(faultstring)
                     if m:
                         raise VRWSErrorException(int(m.group(1)), m.group(2))
-                    
+
                     raise VRWSSOAPException(faultcode, faultstring,
                                             faultactor, detail)
-        
+
             time.sleep(tries)
         tries += 1
         conn = http_client.HTTPSConnection(VRWS_HOST)
@@ -179,6 +188,7 @@ def send_message(message):
                                 response.read())
 
     return response
+
 
 def parse_response(response, kind):
     tree = etree.parse(response)
@@ -195,7 +205,7 @@ def parse_response(response, kind):
     types = {}
     categories = {}
     regions = {}
-    
+
     for rate in resp.iter(VRWS_NS + 'rate'):
         rtype = rate.find('./' + VRWS_NS + 'type').text
         rvalue = D(rate.find('./' + VRWS_NS + 'value').text)
@@ -213,9 +223,9 @@ def parse_response(response, kind):
         rdetail = rate.find('./' + VRWS_NS + 'detail')
         if rdetail is not None:
             rdetail = rdetail.text
-            
+
         robj = Rate(rvalue, rdate, rdetail)
-            
+
         if rrgn:
             rgn = regions.get(rrgn, None)
             if rgn is None:
@@ -231,7 +241,8 @@ def parse_response(response, kind):
             else:
                 types.setdefault(rtype, []).append(robj)
 
-    return Rates(types, categories, regions)    
+    return Rates(types, categories, regions)
+
 
 def get_rates(country, date=None,
               fetch_reduced=True, fetch_category=True, fetch_region=True):
@@ -240,8 +251,7 @@ def get_rates(country, date=None,
 
        """
 
-    boolean = { True: 'true',
-                False: 'false' }
+    boolean = {True: 'true', False: 'false'}
 
     if date is None:
         date = datetime.date.today()
@@ -269,14 +279,15 @@ def get_rates(country, date=None,
 
     return parse_response(send_message(message), 'ratesResponse')
 
+
 def get_changes(from_date=None, to_date=None, country=None):
     """Retrieve a list of VAT rate changes starting from `from_date`."""
 
     if from_date is None:
         from_date = datetime.date.today()
-        
+
     extras = []
-    
+
     if to_date is not None:
         extras.append('\n      <vrws:dateTo>{to_date}</vrws:dateTo>'\
                       .format(to_date=format_date(to_date)))
@@ -299,4 +310,3 @@ def get_changes(from_date=None, to_date=None, country=None):
                           extras=''.join(extras))
 
     return parse_response(send_message(message), 'changesResponse')
-    

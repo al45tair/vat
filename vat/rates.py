@@ -6,14 +6,15 @@ from decimal import Decimal as D
 from . import vrws
 from . import tic
 
+
 class RateCache (object):
     """Manages a cache of VAT rates fetched from europa.eu's
        VATRateWebService.  Most queries will come from the cache, which will
        only fetch new rates once per day per member state."""
-    
+
     # Historic reduced rates - VRWS currently isn't supplying reduced rate
     # information
-    
+
     # I've tried to pick, as the first entry (with no detail) the most likely
     # rate you'll want.  But you MUST check.  Also, as of 1st Sept 2015, NONE
     # of this information is available via the web service, so the detail may
@@ -49,7 +50,7 @@ class RateCache (object):
         'SE': (D('6.0'), (D('12.0'), 'Alternate')),
         'GB': (D('5.0'),),
         }
-        
+
     def __init__(self):
         self.rates = {}
 
@@ -84,7 +85,7 @@ class RateCache (object):
             if rate_date is None or rate.application_date > rate_date:
                 best_rate = rate
         return best_rate
-    
+
     def standard_rates(self, member_state, region=None):
         """Retrieve the set of standard rates for the given member state,
         optionally for the specified region.
@@ -108,7 +109,7 @@ class RateCache (object):
             return vrws.Rate(rate_info[0], the_date, rate_info[1])
         else:
             return vrws.Rate(rate_info, the_date, None)
-    
+
     def reduced_rates(self, member_state, region=None):
         """Retrieve the set of reduced rates for the given member state,
         optionally for the specified region.
@@ -133,12 +134,12 @@ class RateCache (object):
             the_date = datetime.date(2015,9,1)
             rates = [self._to_rate(r, the_date) for r in rates]
         return rates
-    
+
     def reduced_rate(self, member_state, region=None):
         """Return today’s ordinary reduced rate for the given member state
         and (optional) region."""
         return self._best_rate(self.reduced_rates(member_state, region))
-    
+
     def category_rates(self, member_state, category, region=None):
         """Retrieve the set of rates for the given member state, category
         and (optional) region.
@@ -151,14 +152,14 @@ class RateCache (object):
         if region is not None:
             rates = rates.regions[region]
         return rates.categories.get(category, [])
-    
+
     def category_rate(self, member_state, category, region=None):
         """Return today’s rate for the given member state, category and
         (optional) region."""
         return self._best_rate(self.category_rates(member_state,
                                                    category,
                                                    region))
-    
+
     def categories(self, member_state, region=None):
         """Return a list of categories for the given member state and
         (optional) region."""
