@@ -4,6 +4,7 @@ import vat
 import pytest
 from vat import vrws
 
+
 def test_vrws():
     try:
         for ms in vat.member_states:
@@ -15,4 +16,3 @@ def test_vrws():
             pytest.skip('EU VRWS server is malfunctioning, so skipping test')
         else:
             raise
-        

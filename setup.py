@@ -3,6 +3,7 @@ import sys
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
+
 class PyTest(TestCommand):
     def finalize_options(self):
         TestCommand.finalize_options(self)
@@ -14,9 +15,10 @@ class PyTest(TestCommand):
         errno = pytest.main(self.test_args)
         sys.exit(errno)
 
+
 with open('README.rst', 'rb') as f:
     long_desc = f.read().decode('utf-8')
-        
+
 setup(
     name='vat',
     version='0.3.3',
@@ -32,7 +34,7 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Topic :: Office/Business :: Financial',
         ],
-    package_data = {
+    package_data={
         'vat': ['gb/moss/resources/*']
         },
     tests_require=['pytest'],

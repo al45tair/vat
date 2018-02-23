@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import decimal
 from decimal import Decimal as D
 import re
-import time
 import datetime
-import six
 from six.moves import urllib
 from lxml.html import soupparser
 
@@ -14,13 +11,16 @@ from .vrws import Rate, Rates
 
 TIC_VATRATESEARCH = str('http://ec.europa.eu/taxation_customs/tic/public/vatRates/vatratesSearch.html')
 
+
 def format_date(date):
     return '{d:02d}/{m:02d}/{y:04d}'.format(y=date.year,
                                             m=date.month,
                                             d=date.day)
 
+
 class TICException(Exception):
     pass
+
 
 class TICHTTPException(TICException):
     def __init__(self, code, headers, body):
@@ -32,6 +32,7 @@ class TICHTTPException(TICException):
         return 'TICHTTPException(%r, %r, %r)' % (self.code,
                                                  self.headers,
                                                  self.body)
+
 
 msa_map = {
     'AT': 1,
@@ -64,7 +65,10 @@ msa_map = {
     'SK': 28
     }
 
+
 _percent_re = re.compile('(\d*(?:\.\d*)?)%')
+
+
 def get_rates(country, date=None):
     """Retrieve the VAT rates for the specified country.  Returns a
        Rates object on success, or in case of error raises an exception."""
@@ -72,14 +76,16 @@ def get_rates(country, date=None):
     if date is None:
         date = datetime.date.today()
 
-    req = urllib.request.Request(url=TIC_VATRATESEARCH,
-                                 headers={ 'Content-Type': 'application/x-www-form-urlencoded' })
+    req = urllib.request.Request(
+        url=TIC_VATRATESEARCH,
+        headers={'Content-Type': 'application/x-www-form-urlencoded'})
     req.method = 'POST'
-    req.data = urllib.parse.urlencode([ ('listOfMsa', msa_map[country]),
-                                        ('listOfTypes', 'Standard'),
-                                        ('listOfTypes', 'Reduced'),
-                                        ('listOfTypes', 'Category'),
-                                        ('dateFilter', format_date(date)) ])
+    req.data = urllib.parse.urlencode([
+        ('listOfMsa', msa_map[country]),
+        ('listOfTypes', 'Standard'),
+        ('listOfTypes', 'Reduced'),
+        ('listOfTypes', 'Category'),
+        ('dateFilter', format_date(date))]).encode('utf-8')
 
     f = urllib.request.urlopen(req)
 
@@ -101,6 +107,6 @@ def get_rates(country, date=None):
         raise TICException("didn't understand rate %s" % std_rate)
 
     rate = Rate(D(m.group(1)), date)
-    rates = Rates({ 'Standard': rate }, {}, {})
+    rates = Rates({'Standard': rate}, {}, {})
 
     return rates
