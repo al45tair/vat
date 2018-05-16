@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import distance
 import re
 import unicodedata
-import Levenshtein
 import six
 
 from . import metaphone
@@ -167,7 +167,7 @@ def _word_difference(s, t):
         return 0
     
     max_ed = max(len(s), len(t))
-    return float(Levenshtein.distance(s, t)) / max_ed
+    return float(distance.levenshtein(s, t)) / max_ed
 
 def _edit_distance(s, t):
     m = len(s)
