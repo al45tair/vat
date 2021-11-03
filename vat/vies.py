@@ -166,7 +166,7 @@ def check_vat(vat_number):
     message = message.encode('utf-8')
     
     headers = { b'Content-type': b'text/xml',
-                b'SOAPAction': b'urn:ec.europa.eu:taxud:vies:services:checkVat' }
+                b'SOAPAction': b'' }
 
     tries = 0
     response = None
@@ -296,7 +296,7 @@ def check_vat_approx(vat_number, extra={}, requester=None):
     message = message.encode('utf-8')
 
     headers = { b'Content-type': b'text/xml',
-                b'SOAPAction': b'urn:ec.europa.eu:taxud:vies:services:checkVatApprox' }
+                b'SOAPAction': b'' }
 
     tries = 0
     response = None

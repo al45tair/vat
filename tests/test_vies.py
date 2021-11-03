@@ -17,12 +17,15 @@ test_numbers = [
     # These are all courtesy of Santander, who publish these details on their
     # various websites (sometimes it takes a moment searching, but they're all
     # public).
-    ('GB466264724',
-     { 'name': 'Santander UK plc',
-        'street': 'Tax Department, B1 / F2 Carlton Park, Narborough',
-        'postcode': 'LE19 0AL',
-        'city': 'Leicester',
-        'state': 'Leicestershire' }),
+
+    # No longer valid
+    # ('GB466264724',
+    #  { 'name': 'Santander UK plc',
+    #     'street': 'Tax Department, B1 / F2 Carlton Park, Narborough',
+    #     'postcode': 'LE19 0AL',
+    #     'city': 'Leicester',
+    #     'state': 'Leicestershire' }),
+
     ('ESA39000013',
      { 'name': 'Banco Santander, S.A.',
         'city': 'Santander',
@@ -43,21 +46,24 @@ test_numbers = [
        'street': 'Stamholmen 147 6',
        'city': 'Hvidovre',
        'postcode': '2650' }),
-    ('IT05634190010',
-     { 'name': 'Santander Consumer Bank Spa',
-       'street': 'Via Nizza 262/26',
-       'city': 'Torino',
-       'postcode': '10126' }),
-    ('PL5272046102',
-     { 'name': 'Santander Consumer Bank S.A.',
-       'street': 'ul. Strzegomska 42c',
-       'city': 'Wrocław',
-       'postcode': '53-611' }),
-    ('PT503811483',
-     { 'name': 'Banco Santander Consumer Portugal S.A.',
-       'street': 'Rue Castilho, 2',
-       'city': 'Lisboa',
-       'postcode': '1269-073' }),
+
+    # No longer valid
+    # ('IT05634190010',
+    #  { 'name': 'Santander Consumer Bank Spa',
+    #    'street': 'Via Nizza 262/26',
+    #    'city': 'Torino',
+    #    'postcode': '10126' }),
+    # ('PL5272046102',
+    #  { 'name': 'Santander Consumer Bank S.A.',
+    #    'street': 'ul. Strzegomska 42c',
+    #    'city': 'Wrocław',
+    #    'postcode': '53-611' }),
+    # ('PT503811483',
+    #  { 'name': 'Banco Santander Consumer Portugal S.A.',
+    #    'street': 'Rue Castilho, 2',
+    #    'city': 'Lisboa',
+    #    'postcode': '1269-073' }),
+
     ('SE516406033601',
      { 'name': 'Santander Consumer Bank AS Norge, Sverige Filial',
        'street': 'FE 302',
@@ -100,11 +106,11 @@ def test_local_fuzzy_vies():
 def test_remote_fuzzy_vies():
     """Test a VIES response where the member state does the fuzzy matching."""
     try:
-        valid, response = vat.check_details(test_numbers[1][0],
-                                            test_numbers[1][1])
+        valid, response = vat.check_details(test_numbers[0][0],
+                                            test_numbers[0][1])
         assert valid == True
 
-        valid, response = vat.check_details(test_numbers[1][0], bad_info)
+        valid, response = vat.check_details(test_numbers[0][0], bad_info)
         assert valid == False
     except vat.VIESHTTPException as e:
         if e.code >= 500 and e.code <= 599:
@@ -116,7 +122,7 @@ def test_non_compliant_vies():
     """Test a VIES response where the member state is non-compliant and
     does not provide details *or* do fuzzy matching."""
     try:
-        valid, response = vat.check_details(test_numbers[2][0], bad_info)
+        valid, response = vat.check_details(test_numbers[1][0], bad_info)
         assert valid is None
         assert response.trader_info['name'] == bad_info['name']
     except vat.VIESHTTPException as e:
