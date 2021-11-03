@@ -180,6 +180,6 @@ member_states = [
     MS('SK', 'SK', 'Slovakia',        'EUR',     'EUR 13941.00',   'EUR 35000.00',   'EUR 49790.00',  r'\d{10}'),
     MS('FI', 'FI', 'Finland',         'EUR',     'EUR 10000.00',   'EUR 35000.00',    'EUR 8500.00',  r'\d{8}'),
     MS('SE', 'SE', 'Sweden',          'SEK',     'SEK 90000.00',  'SEK 320000.00',            None,   r'\d{12}'),
-    MS('GB', 'GB', 'United Kingdom',  'GBP',     'GBP 81000.00',   'GBP 70000.00',   'GBP 81000.00',  r'\d{3}\s*\d{4}\s*\d{2}(?:\s*\d{3})?|GD\d{3}|HA\d{3}'),
+    # MS('GB', 'GB', 'United Kingdom',  'GBP',     'GBP 81000.00',   'GBP 70000.00',   'GBP 81000.00',  r'\d{3}\s*\d{4}\s*\d{2}(?:\s*\d{3})?|GD\d{3}|HA\d{3}'),
     ]
     
